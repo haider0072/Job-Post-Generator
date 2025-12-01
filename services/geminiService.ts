@@ -1,8 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { JobPostRequest } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
 const SYSTEM_INSTRUCTION = `
 You are an expert HR Recruitment Specialist and Copywriter with over 20 years of experience.
 Your goal is to transform a single user prompt (which can be simple or complex) into a high-quality, professional Markdown job description.
@@ -26,6 +24,10 @@ Your goal is to transform a single user prompt (which can be simple or complex) 
 `;
 
 export const generateJobPost = async (request: JobPostRequest): Promise<string> => {
+  // Initialize the client inside the function to ensure it captures the API key 
+  // after the user has completed the selection flow.
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
