@@ -8,10 +8,8 @@ export interface GeneratedJobPost {
 }
 
 declare global {
-  interface Window {
-    aistudio?: {
-      hasSelectedApiKey(): Promise<boolean>;
-      openSelectKey(): Promise<void>;
-    };
+  interface AIStudio {
+    hasSelectedApiKey(): Promise<boolean>;
+    openSelectKey(): Promise<void>;
   }
 }
