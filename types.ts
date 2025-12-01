@@ -1,5 +1,6 @@
 export interface JobPostRequest {
   prompt: string;
+  accessToken?: string;
 }
 
 export interface GeneratedJobPost {
@@ -7,9 +8,27 @@ export interface GeneratedJobPost {
   timestamp: number;
 }
 
+export interface GoogleUser {
+  email: string;
+  name: string;
+  picture: string;
+  accessToken: string;
+}
+
 declare global {
-  interface AIStudio {
-    hasSelectedApiKey(): Promise<boolean>;
-    openSelectKey(): Promise<void>;
+  interface Window {
+    google?: {
+      accounts: {
+        oauth2: {
+          initTokenClient: (config: {
+            client_id: string;
+            scope: string;
+            callback: (response: { access_token: string }) => void;
+          }) => {
+            requestAccessToken: () => void;
+          };
+        };
+      };
+    };
   }
 }

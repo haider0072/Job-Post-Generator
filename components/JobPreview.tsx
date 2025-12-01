@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Copy, Check, FileText } from 'lucide-react';
 
 interface JobPreviewProps {
@@ -58,13 +59,13 @@ export const JobPreview: React.FC<JobPreviewProps> = ({ content, isLoading }) =>
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 h-full flex flex-col overflow-hidden relative group">
       {/* Toolbar */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gray-50/80 backdrop-blur-sm absolute top-0 left-0 right-0 z-10 transition-opacity">
+      <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gray-50/80 backdrop-blur-sm">
         <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Preview</h3>
         <button
           onClick={handleCopy}
           className={`flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-            copied 
-              ? 'bg-green-100 text-green-700 border border-green-200' 
+            copied
+              ? 'bg-green-100 text-green-700 border border-green-200'
               : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:text-gray-900'
           }`}
         >
@@ -83,18 +84,27 @@ export const JobPreview: React.FC<JobPreviewProps> = ({ content, isLoading }) =>
       </div>
 
       {/* Content */}
-      <div className="flex-grow overflow-y-auto p-8 pt-20 prose prose-slate prose-headings:text-brand-900 prose-a:text-brand-600 max-w-none">
-        <ReactMarkdown
-            components={{
-                h1: ({node, ...props}) => <h1 className="text-3xl font-extrabold text-gray-900 mb-6 border-b pb-4" {...props} />,
-                h2: ({node, ...props}) => <h2 className="text-xl font-bold text-gray-800 mt-8 mb-4" {...props} />,
-                ul: ({node, ...props}) => <ul className="list-disc list-outside ml-6 space-y-1" {...props} />,
-                li: ({node, ...props}) => <li className="text-gray-700" {...props} />,
-                p: ({node, ...props}) => <p className="text-gray-600 leading-relaxed mb-4" {...props} />,
-            }}
-        >
-          {content}
-        </ReactMarkdown>
+      <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 min-h-0" style={{wordBreak: 'break-word', overflowWrap: 'anywhere'}}>
+        <article className="w-full max-w-full" style={{wordBreak: 'break-word', overflowWrap: 'anywhere'}}>
+          <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                  h1: ({...props}) => <h1 className="text-3xl font-extrabold text-gray-900 mb-6 border-b pb-4" style={{wordBreak: 'break-word', overflowWrap: 'anywhere'}} {...props} />,
+                  h2: ({...props}) => <h2 className="text-xl font-bold text-gray-800 mt-8 mb-4" style={{wordBreak: 'break-word', overflowWrap: 'anywhere'}} {...props} />,
+                  h3: ({...props}) => <h3 className="text-lg font-semibold text-gray-800 mt-6 mb-3" style={{wordBreak: 'break-word', overflowWrap: 'anywhere'}} {...props} />,
+                  ul: ({...props}) => <ul className="list-disc list-outside ml-6 space-y-2 mb-4" style={{wordBreak: 'break-word', overflowWrap: 'anywhere'}} {...props} />,
+                  ol: ({...props}) => <ol className="list-decimal list-outside ml-6 space-y-2 mb-4" style={{wordBreak: 'break-word', overflowWrap: 'anywhere'}} {...props} />,
+                  li: ({...props}) => <li className="text-gray-700 pl-2" style={{wordBreak: 'break-word', overflowWrap: 'anywhere'}} {...props} />,
+                  p: ({...props}) => <p className="text-gray-600 leading-relaxed mb-4" style={{wordBreak: 'break-word', overflowWrap: 'anywhere'}} {...props} />,
+                  strong: ({...props}) => <strong className="font-semibold text-gray-900" {...props} />,
+                  em: ({...props}) => <em className="italic" {...props} />,
+                  code: ({...props}) => <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono text-gray-800" style={{wordBreak: 'break-all', overflowWrap: 'anywhere'}} {...props} />,
+                  a: ({...props}) => <a className="text-brand-600 hover:text-brand-700 underline" style={{wordBreak: 'break-word', overflowWrap: 'anywhere'}} {...props} />,
+              }}
+          >
+            {content}
+          </ReactMarkdown>
+        </article>
       </div>
     </div>
   );

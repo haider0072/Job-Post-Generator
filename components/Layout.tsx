@@ -1,11 +1,13 @@
 import React from 'react';
-import { Briefcase } from 'lucide-react';
+import { Briefcase, LogOut } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
+  userEmail?: string | null;
+  onLogout?: () => void;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ children }) => {
+export const Layout: React.FC<LayoutProps> = ({ children, userEmail, onLogout }) => {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       {/* Header */}
@@ -17,8 +19,21 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             </div>
             <h1 className="text-xl font-bold text-gray-900 tracking-tight">JobCraft AI</h1>
           </div>
-          <div className="hidden md:flex items-center space-x-4">
-            <span className="text-sm text-gray-500">Powered by Gemini 2.5 Flash</span>
+          <div className="flex items-center space-x-4">
+            <span className="text-sm text-gray-500 hidden md:inline">Powered by Gemini 2.0 Flash</span>
+            {userEmail && (
+              <>
+                <span className="text-sm text-gray-600 hidden sm:inline">{userEmail}</span>
+                <button
+                  onClick={onLogout}
+                  className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  title="Logout"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span className="hidden sm:inline">Logout</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
       </header>
