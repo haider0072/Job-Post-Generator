@@ -1,7 +1,3 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
-
 # JobCraft AI - AI-Powered Job Post Generator
 
 Create professional, engaging job posts in seconds using Google's Gemini 2.0 Flash AI. Simply sign in with Google, enter your Gemini API key, and start generating high-quality job descriptions instantly.
@@ -199,13 +195,3 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## 📄 License
 
 MIT License - feel free to use this project for personal or commercial purposes.
-
-## 🙏 Acknowledgments
-
-- Built with [Google Gemini 2.0 Flash](https://deepmind.google/technologies/gemini/)
-- UI components styled with [TailwindCSS](https://tailwindcss.com/)
-- Icons from [Lucide React](https://lucide.dev/)
-
----
-
-**Made with ❤️ using Google Gemini AI**
