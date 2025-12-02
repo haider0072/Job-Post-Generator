@@ -1,6 +1,9 @@
 import { JobPostRequest } from "../types";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+// Use relative URL for production (Vercel), absolute URL for local dev
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (
+  import.meta.env.DEV ? 'http://localhost:3001' : ''
+);
 
 // Clean markdown code blocks from response
 const cleanMarkdown = (text: string): string => {
