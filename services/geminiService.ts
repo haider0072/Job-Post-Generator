@@ -33,6 +33,7 @@ export const generateJobPost = async (request: JobPostRequest): Promise<string> 
       body: JSON.stringify({
         prompt: request.prompt,
         accessToken: request.accessToken,
+        organizationData: request.organizationData,
       }),
     });
 
