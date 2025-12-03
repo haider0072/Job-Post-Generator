@@ -2,88 +2,34 @@ import React, { useState, useEffect } from 'react';
 import { Layout } from './components/Layout';
 import { JobForm } from './components/JobForm';
 import { JobPreview } from './components/JobPreview';
-import { OrganizationSetup } from './components/OrganizationSetup';
-import { JobPostRequest, Organization } from './types';
+import { JobPostRequest } from './types';
 import { generateJobPost } from './services/geminiService';
-import { AlertCircle, Briefcase, Lock, Loader2 } from 'lucide-react';
+import { AlertCircle, Briefcase, Lock, Loader2, LogOut } from 'lucide-react';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
-
-type AppState = 'login' | 'api-key-input' | 'organization-setup' | 'main-app';
 
 const App: React.FC = () => {
-  const [appState, setAppState] = useState<AppState>('login');
-  const [checkingAuth, setCheckingAuth] = useState<boolean>(true);
-
-  // User data
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState<string | null>(null);
-  const [organization, setOrganization] = useState<Organization | null>(null);
-
-  // UI states
-  const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const [tempApiKey, setTempApiKey] = useState<string>('');
-
-  // Job generation states
+  const [checkingAuth, setCheckingAuth] = useState<boolean>(true);
   const [jobPostContent, setJobPostContent] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [showApiKeyInput, setShowApiKeyInput] = useState<boolean>(false);
+  const [tempApiKey, setTempApiKey] = useState<string>('');
 
-  // Check existing session on mount
   useEffect(() => {
-    const checkExistingSession = async () => {
-      const storedEmail = localStorage.getItem('user_email');
-      const storedUserId = localStorage.getItem('user_id');
+    // Check if user has existing API key in localStorage
+    const storedApiKey = localStorage.getItem('gemini_api_key');
+    const storedEmail = localStorage.getItem('user_email');
 
-      if (storedEmail && storedUserId) {
-        setUserEmail(storedEmail);
-        setUserId(storedUserId);
+    if (storedApiKey && storedEmail) {
+      setApiKey(storedApiKey);
+      setUserEmail(storedEmail);
+    }
 
-        // Fetch user profile from Supabase (API key)
-        try {
-          const profileResponse = await fetch(`${API_BASE_URL}/api/user-profile/${storedUserId}`);
-          if (profileResponse.ok) {
-            const profileData = await profileResponse.json();
-            if (profileData.gemini_api_key) {
-              setApiKey(profileData.gemini_api_key);
-              localStorage.setItem('gemini_api_key', profileData.gemini_api_key);
-
-              // Try to fetch organization data
-              const orgResponse = await fetch(`${API_BASE_URL}/api/organization/${storedUserId}`);
-              if (orgResponse.ok) {
-                const orgData = await orgResponse.json();
-                setOrganization(orgData);
-              }
-
-              // Go to main app
-              setAppState('main-app');
-            } else {
-              // No API key found, show API key input
-              setAppState('api-key-input');
-            }
-          } else {
-            // No profile found, show API key input
-            setAppState('api-key-input');
-          }
-        } catch (err) {
-          console.error('Error fetching user data:', err);
-          // Fallback: check localStorage
-          const storedApiKey = localStorage.getItem('gemini_api_key');
-          if (storedApiKey) {
-            setApiKey(storedApiKey);
-            setAppState('main-app');
-          } else {
-            setAppState('api-key-input');
-          }
-        }
-      }
-
-      setCheckingAuth(false);
-    };
-
-    checkExistingSession();
+    setCheckingAuth(false);
   }, []);
 
   const handleLogin = async () => {
@@ -106,6 +52,7 @@ const App: React.FC = () => {
         scope: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
         callback: async (response: { access_token: string }) => {
           if (response.access_token) {
+            // Get user info from Google
             try {
               const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
                 headers: {
@@ -116,37 +63,10 @@ const App: React.FC = () => {
               if (userInfoResponse.ok) {
                 const userInfo = await userInfoResponse.json();
                 setUserEmail(userInfo.email);
-                setUserId(userInfo.id);
                 localStorage.setItem('user_email', userInfo.email);
-                localStorage.setItem('user_id', userInfo.id);
 
-                // Check if user already exists in database
-                try {
-                  const profileResponse = await fetch(`${API_BASE_URL}/api/user-profile/${userInfo.id}`);
-                  if (profileResponse.ok) {
-                    const profileData = await profileResponse.json();
-                    if (profileData.gemini_api_key) {
-                      // User already has API key, fetch everything and go to main app
-                      setApiKey(profileData.gemini_api_key);
-                      localStorage.setItem('gemini_api_key', profileData.gemini_api_key);
-
-                      // Fetch organization
-                      const orgResponse = await fetch(`${API_BASE_URL}/api/organization/${userInfo.id}`);
-                      if (orgResponse.ok) {
-                        const orgData = await orgResponse.json();
-                        setOrganization(orgData);
-                      }
-
-                      setAppState('main-app');
-                      return;
-                    }
-                  }
-                } catch (err) {
-                  console.error('Error checking existing user:', err);
-                }
-
-                // New user or no API key - show API key input
-                setAppState('api-key-input');
+                // Now show API key input
+                setShowApiKeyInput(true);
               }
             } catch (err) {
               console.error("Error fetching user info:", err);
@@ -166,7 +86,7 @@ const App: React.FC = () => {
     }
   };
 
-  const handleApiKeySubmit = async () => {
+  const handleApiKeySubmit = () => {
     if (!tempApiKey.trim()) {
       setError("Please enter your Gemini API key");
       return;
@@ -174,49 +94,18 @@ const App: React.FC = () => {
 
     setApiKey(tempApiKey);
     localStorage.setItem('gemini_api_key', tempApiKey);
-
-    // Save to Supabase
-    try {
-      await fetch(`${API_BASE_URL}/api/user-profile`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId,
-          geminiApiKey: tempApiKey,
-        }),
-      });
-    } catch (err) {
-      console.error('Error saving API key to Supabase:', err);
-    }
-
+    setShowApiKeyInput(false);
     setTempApiKey('');
-    setError(null);
-    setAppState('organization-setup');
-  };
-
-  const handleOrganizationComplete = (org: Organization) => {
-    setOrganization(org);
-    localStorage.setItem('org_setup_complete', 'true');
-    setAppState('main-app');
-  };
-
-  const handleOrganizationSkip = () => {
-    localStorage.setItem('org_setup_complete', 'skipped');
-    setAppState('main-app');
   };
 
   const handleLogout = () => {
     setApiKey(null);
     setUserEmail(null);
-    setUserId(null);
-    setOrganization(null);
     setJobPostContent(null);
+    setShowApiKeyInput(false);
     setTempApiKey('');
-    setError(null);
-    setIsLoggingIn(false);
-    setIsLoading(false);
-    localStorage.clear();
-    setAppState('login');
+    localStorage.removeItem('gemini_api_key');
+    localStorage.removeItem('user_email');
   };
 
   const handleFormSubmit = async (data: JobPostRequest) => {
@@ -233,7 +122,6 @@ const App: React.FC = () => {
       const result = await generateJobPost({
         ...data,
         accessToken: apiKey,
-        organizationData: organization || undefined,
       });
       setJobPostContent(result);
     } catch (err: any) {
@@ -259,7 +147,7 @@ const App: React.FC = () => {
   }
 
   // API Key Input Screen
-  if (appState === 'api-key-input') {
+  if (showApiKeyInput) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-xl border border-slate-100 max-w-md w-full overflow-hidden">
@@ -311,20 +199,8 @@ const App: React.FC = () => {
     );
   }
 
-  // Organization Setup Screen
-  if (appState === 'organization-setup' && userId) {
-    return (
-      <OrganizationSetup
-        userEmail={userEmail || ''}
-        userId={userId}
-        onComplete={handleOrganizationComplete}
-        onSkip={handleOrganizationSkip}
-      />
-    );
-  }
-
   // Login Screen
-  if (appState === 'login') {
+  if (!apiKey) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-xl border border-slate-100 max-w-md w-full overflow-hidden">
@@ -338,6 +214,7 @@ const App: React.FC = () => {
               Sign in with Google to get started.
             </p>
 
+            {/* Error Message for Login */}
             {error && (
               <div className="mb-6 mx-auto w-full bg-red-50 border border-red-200 rounded-lg p-3 flex items-start text-left animate-fade-in">
                 <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 mr-2 flex-shrink-0" />
@@ -385,7 +262,7 @@ const App: React.FC = () => {
 
           <div className="bg-slate-50 px-8 py-4 border-t border-slate-100 text-center">
             <p className="text-xs text-slate-400">
-              Your data is stored securely and never shared.
+              Your Google Cloud account will be used to access Gemini API.
               <a href="https://console.cloud.google.com/" target="_blank" rel="noopener noreferrer" className="text-brand-600 hover:text-brand-700 hover:underline ml-1 font-medium">
                 Learn more
               </a>
@@ -423,21 +300,6 @@ const App: React.FC = () => {
           <JobPreview content={jobPostContent} isLoading={isLoading} />
         </div>
       </div>
-
-      {/* Organization Info Badge (if available) */}
-      {organization && (
-        <div className="fixed bottom-4 right-4 bg-white border border-slate-200 rounded-lg shadow-lg p-3 max-w-xs">
-          <div className="flex items-start">
-            <Briefcase className="w-4 h-4 text-brand-600 mt-0.5 mr-2 flex-shrink-0" />
-            <div className="text-xs">
-              <p className="font-medium text-slate-700">Company: {organization.name}</p>
-              {organization.location && (
-                <p className="text-slate-500">{organization.location}</p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </Layout>
   );
 };
